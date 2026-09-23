@@ -1,0 +1,349 @@
+{
+ "updatedAt": "2026-09-23 17:05:56",
+ "source": "RTM vehicles 表，status IN ('在用','USE')",
+ "count": 57,
+ "vehicles": [
+  {
+   "plate": "CSUVL2-X25UVV086",
+   "type": "CSUVL2",
+   "project": "DAJIN_SHAN",
+   "city": "上海"
+  },
+  {
+   "plate": "CSUVL3-X26UVV204",
+   "type": "CSUVL3",
+   "project": "DAJIN_SHAN",
+   "city": "上海"
+  },
+  {
+   "plate": "CSUVL3-X26UVV213",
+   "type": "CSUVL3",
+   "project": "DAJIN_SHAN",
+   "city": "上海"
+  },
+  {
+   "plate": "CSUVL3-X26UVV216",
+   "type": "CSUVL3",
+   "project": "DAJIN_SHAN",
+   "city": "上海"
+  },
+  {
+   "plate": "CSUVL3-X26UVV230",
+   "type": "CSUVL3",
+   "project": "DAJIN_SHAN",
+   "city": "上海"
+  },
+  {
+   "plate": "CSUVL3-X26UVV238",
+   "type": "CSUVL3",
+   "project": "DAJIN_SHAN",
+   "city": "上海"
+  },
+  {
+   "plate": "L5-POV505",
+   "type": "L5",
+   "project": "DAJIN_SHAN",
+   "city": "上海"
+  },
+  {
+   "plate": "C174AMG-2391",
+   "type": "C174AMG",
+   "project": "HARZ",
+   "city": "盐城"
+  },
+  {
+   "plate": "C590-0400A",
+   "type": "C590",
+   "project": "HARZ",
+   "city": "盐城"
+  },
+  {
+   "plate": "HC2-AFH8296",
+   "type": "HC2",
+   "project": "LIANHUA_SHAN",
+   "city": "苏州"
+  },
+  {
+   "plate": "HC2-AH82291",
+   "type": "HC2",
+   "project": "LIANHUA_SHAN",
+   "city": "长春"
+  },
+  {
+   "plate": "HC2-AHB0810",
+   "type": "HC2",
+   "project": "LIANHUA_SHAN",
+   "city": "深圳"
+  },
+  {
+   "plate": "LC6-ACE7523",
+   "type": "IMdevcar",
+   "project": "MAINLINE",
+   "city": "苏州"
+  },
+  {
+   "plate": "LC6-AE86032",
+   "type": "IMdevcar",
+   "project": "MAINLINE",
+   "city": "长春"
+  },
+  {
+   "plate": "LC6-BA65106",
+   "type": "IMDEVCAR",
+   "project": "MAINLINE",
+   "city": "盐城"
+  },
+  {
+   "plate": "LC6-BAC5982",
+   "type": "IMDEVCAR",
+   "project": "MAINLINE",
+   "city": "盐城"
+  },
+  {
+   "plate": "LC6-BCJ5713",
+   "type": "IMdevcar",
+   "project": "MAINLINE",
+   "city": "深圳"
+  },
+  {
+   "plate": "LC6-BDK6592",
+   "type": "IMDEVCAR",
+   "project": "MAINLINE",
+   "city": "上海"
+  },
+  {
+   "plate": "LC6-EAT1392",
+   "type": "IMdevcar",
+   "project": "MAINLINE",
+   "city": "长春"
+  },
+  {
+   "plate": "LC6-EAU2291",
+   "type": "IMdevcar",
+   "project": "MAINLINE",
+   "city": "广州"
+  },
+  {
+   "plate": "LC6-EAW3327",
+   "type": "IMdevcar",
+   "project": "MAINLINE",
+   "city": "长春"
+  },
+  {
+   "plate": "LC6-EAW5372",
+   "type": "IMdevcar",
+   "project": "MAINLINE",
+   "city": "长春"
+  },
+  {
+   "plate": "LC6-EAX3592",
+   "type": "IMDEVCAR",
+   "project": "MAINLINE",
+   "city": "广州"
+  },
+  {
+   "plate": "LC6-EBE2159",
+   "type": "IMDEVCAR",
+   "project": "MAINLINE",
+   "city": "长春"
+  },
+  {
+   "plate": "LC6-EC80138",
+   "type": "场景车",
+   "project": "MAINLINE",
+   "city": "苏州"
+  },
+  {
+   "plate": "LC6-EC97031",
+   "type": "IMDEVCAR",
+   "project": "MAINLINE",
+   "city": "苏州"
+  },
+  {
+   "plate": "LC6-EC99307",
+   "type": "IMdevcar",
+   "project": "MAINLINE",
+   "city": "长春"
+  },
+  {
+   "plate": "LC6-ECA2902",
+   "type": "IMdevcar",
+   "project": "MAINLINE",
+   "city": "苏州"
+  },
+  {
+   "plate": "LC6-ECM0799",
+   "type": "IMDEVCAR",
+   "project": "MAINLINE",
+   "city": "苏州"
+  },
+  {
+   "plate": "LC6-EDM9277",
+   "type": "IMdevcar",
+   "project": "MAINLINE",
+   "city": "重庆"
+  },
+  {
+   "plate": "LC6-EDP2300",
+   "type": "IMDEVCAR",
+   "project": "MAINLINE",
+   "city": "长春"
+  },
+  {
+   "plate": "云AFM9751",
+   "type": "场景车",
+   "project": "MAINLINE",
+   "city": "重庆"
+  },
+  {
+   "plate": "粤AH23827",
+   "type": "场景车",
+   "project": "MAINLINE",
+   "city": "广州"
+  },
+  {
+   "plate": "粤E3A3S5",
+   "type": "场景车",
+   "project": "MAINLINE",
+   "city": "长春"
+  },
+  {
+   "plate": "苏EFW8990",
+   "type": "场景车",
+   "project": "MAINLINE",
+   "city": "重庆"
+  },
+  {
+   "plate": "豫AG33408",
+   "type": "场景车",
+   "project": "MAINLINE",
+   "city": "长春"
+  },
+  {
+   "plate": "辽AS559V",
+   "type": "场景车",
+   "project": "MAINLINE",
+   "city": "长春"
+  },
+  {
+   "plate": "鲁AJ9B12",
+   "type": "场景车",
+   "project": "MAINLINE",
+   "city": "长春"
+  },
+  {
+   "plate": "358TWO-052898",
+   "type": "358TWO",
+   "project": "QINWANG_SHAN",
+   "city": "上海"
+  },
+  {
+   "plate": "G58-C09986",
+   "type": "G58",
+   "project": "TAUNUS",
+   "city": "盐城"
+  },
+  {
+   "plate": "G78-J82782",
+   "type": "G78",
+   "project": "TAUNUS",
+   "city": "盐城"
+  },
+  {
+   "plate": "NA6-B98912",
+   "type": "NA6",
+   "project": "TAUNUS",
+   "city": "盐城"
+  },
+  {
+   "plate": "NA8-C00607",
+   "type": "NA8",
+   "project": "TAUNUS",
+   "city": "盐城"
+  },
+  {
+   "plate": "L5-124PVV332",
+   "type": "L5",
+   "project": "TIANMA_SHAN",
+   "city": "上海"
+  },
+  {
+   "plate": "L5-PVV562",
+   "type": "L5",
+   "project": "TIANMA_SHAN",
+   "city": "上海"
+  },
+  {
+   "plate": "LC6-EAY2305",
+   "type": "IMdevcar",
+   "project": "TIANMA_SHAN",
+   "city": "重庆"
+  },
+  {
+   "plate": "LS7-EAK0269",
+   "type": "LS7",
+   "project": "TIANMA_SHAN",
+   "city": "上海"
+  },
+  {
+   "plate": "MY25E02-402287",
+   "type": "E02 8620",
+   "project": "WUHUA_SHAN",
+   "city": "芜湖"
+  },
+  {
+   "plate": "MY25E02-402295",
+   "type": "E02 8620",
+   "project": "WUHUA_SHAN",
+   "city": "芜湖"
+  },
+  {
+   "plate": "MY25E02ORINY-391343",
+   "type": "E02 ORINY",
+   "project": "WUHUA_SHAN",
+   "city": "苏州"
+  },
+  {
+   "plate": "MY26E01BMC-194055",
+   "type": "E01 ORINY",
+   "project": "WUHUA_SHAN",
+   "city": "苏州"
+  },
+  {
+   "plate": "MY26E0YL3POC-000611A",
+   "type": "MY26E0YL3",
+   "project": "WUHUA_SHAN",
+   "city": "芜湖"
+  },
+  {
+   "plate": "MY26E0YL3POC-000623A",
+   "type": "MY26E0YL3",
+   "project": "WUHUA_SHAN",
+   "city": "芜湖"
+  },
+  {
+   "plate": "Buick-EC68721",
+   "type": "友商",
+   "project": "YOUSHANG",
+   "city": "苏州"
+  },
+  {
+   "plate": "Buick-EC69020",
+   "type": "友商",
+   "project": "YOUSHANG",
+   "city": "苏州"
+  },
+  {
+   "plate": "NA6-B98910",
+   "type": "友商",
+   "project": "YOUSHANG",
+   "city": "苏州"
+  },
+  {
+   "plate": "Tesla V14",
+   "type": "TESLA",
+   "project": "YOUSHANG",
+   "city": "苏州"
+  }
+ ]
+}
