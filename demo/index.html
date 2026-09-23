@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>L3 用例筛选 · 方案验证 Demo</title>
+<style>
+  /* 视觉与 docs/tasks/feishu-checkpoint-guide/index.html（已上线的打点 H5）保持一致：
+     同一批用户在同一个场地用，两页风格不一致会被当成两个系统。
+     变量、字体栈、圆角、主色全部沿用，勿另立一套。 */
+  :root{
+    --blue:#3370ff; --blue-d:#245bdb; --bg:#f5f6f7; --card:#fff;
+    --text:#1f2329; --sub:#8f959e; --line:#e5e6eb; --ok:#34c724; --err:#f54a45; --warn:#ff8800;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    background:var(--bg);color:var(--text);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;
+    display:flex;flex-direction:column;
+    padding-bottom:calc(92px + env(safe-area-inset-bottom));
+    -webkit-user-select:none;user-select:none;
+  }
+
+  header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+  header .hrow{display:flex;align-items:center;gap:10px;padding:10px 16px}
+  header .hrow + .hrow{border-top:1px solid var(--line)}
+  header .label{font-size:12px;color:var(--sub);flex:none;width:38px}
+  header .name{font-size:15px;font-weight:600;flex:1;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  header .name.ph{color:var(--sub);font-weight:400;font-size:14px}
+  header .edit{flex:none;border:1px solid var(--line);background:#fff;color:var(--blue);
+    border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
+  header .edit:active{background:#f0f1f2}
+
+  /* ── 筛选区 ─────────────────────────────
+     固定在 header 下方：列表有 1249 条，滚动后还能随时改筛选条件，
+     否则用户改一次筛选要先滚回顶部。 */
+  .filters{background:var(--card);border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:9;padding:10px 12px 8px}
+  .filters .frow{display:flex;gap:8px;align-items:center}
+  .filters .frow + .frow{margin-top:8px}
+  select,input[type=search]{
+    font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;
+    padding:8px 10px;background:#fff;color:var(--text);min-width:0;
+  }
+  select{flex:none;max-width:44%}
+  input[type=search]{flex:1;width:100%}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{font-size:13px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);
+    background:#fff;color:var(--sub);cursor:pointer}
+  .chip.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+
+  .bar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sub);
+    padding:8px 16px 4px}
+  .bar b{color:var(--blue);font-size:14px}
+  .bar .sp{flex:1}
+  .bar button{font:inherit;font-size:12px;border:1px solid var(--line);background:#fff;
+    color:var(--sub);border-radius:6px;padding:4px 10px;cursor:pointer}
+  .bar button:active{background:#f0f1f2}
+
+  main{flex:1;padding:0 12px 12px;display:flex;flex-direction:column;gap:8px}
+  .empty{text-align:center;color:var(--sub);font-size:13px;padding:48px 20px;line-height:1.8}
+
+  .c{background:var(--card);border-radius:10px;padding:11px 13px;display:flex;gap:11px;
+    align-items:flex-start;cursor:pointer}
+  .c.on{box-shadow:inset 0 0 0 1.5px var(--blue)}
+  .c .box{flex:none;width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);
+    margin-top:1px;display:flex;align-items:center;justify-content:center;
+    font-size:13px;color:#fff;font-weight:700}
+  .c.on .box{background:var(--blue);border-color:var(--blue)}
+  .c .body{flex:1;min-width:0}
+  .c .nm{font-size:14px;line-height:1.45;word-break:break-word}
+  .c .meta{margin-top:5px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+    font-size:11px;color:var(--sub)}
+  .c .tno{font-variant-numeric:tabular-nums}
+  .tag{font-size:11px;padding:1px 7px;border-radius:999px;background:#f0f1f2;color:var(--sub)}
+  .tag.p0{background:#ffece8;color:#d83931}
+  .tag.p1{background:#fff4e6;color:#d9730d}
+  .tag.p2{background:#e8f3ff;color:#245bdb}
+  .tag.done{background:#e8ffea;color:#1f9e1f}
+  mark{background:#fff3b0;color:inherit;border-radius:2px;padding:0 1px}
+
+  footer{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);
+    border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    display:flex;gap:10px;align-items:center}
+  footer .sum{flex:1;font-size:12px;color:var(--sub);line-height:1.4}
+  footer .sum b{display:block;font-size:16px;color:var(--text)}
+  footer .go{flex:none;border:none;border-radius:10px;padding:13px 22px;font:inherit;
+    font-size:15px;font-weight:600;background:var(--blue);color:#fff;cursor:pointer}
+  footer .go:disabled{background:#c9cdd4}
+  footer .go:active:not(:disabled){background:var(--blue-d)}
+
+  #toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);z-index:99;
+    background:rgba(31,35,41,.92);color:#fff;font-size:13px;padding:10px 16px;
+    border-radius:8px;max-width:80%;text-align:center;line-height:1.5;
+    opacity:0;transition:opacity .2s;pointer-events:none}
+  #toast.show{opacity:1}
+
+  /* 记忆状态条：demo 专用，用来直观确认「记忆生效了没有」。
+     正式方案里不展示，只作为验证手段。 */
+  #memo{background:#fffbe6;border-bottom:1px solid #ffe58f;font-size:11px;
+    color:#8a6d00;padding:6px 16px;line-height:1.5;word-break:break-all}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <span class="label">车辆</span>
+    <span class="name ph" id="veh">未选择</span>
+    <button class="edit" id="vehBtn" type="button">选择</button>
+  </div>
+</header>
+
+<div id="memo">记忆：—</div>
+
+<div class="filters">
+  <div class="frow">
+    <select id="flow"><option value="">全部流程</option></select>
+    <input type="search" id="kw" placeholder="搜索用例名 / 测试编号" autocomplete="off">
+  </div>
+  <div class="frow">
+    <div class="chips" id="pri"></div>
+  </div>
+</div>
+
+<div class="bar">
+  <span>已选 <b id="nSel">0</b> / 命中 <span id="nHit">0</span></span>
+  <span class="sp"></span>
+  <button id="clrSel" type="button">清空已选</button>
+  <button id="clrAll" type="button">重置全部</button>
+</div>
+
+<main id="list"><div class="empty">加载中…</div></main>
+
+<footer>
+  <div class="sum"><b id="fSel">0 条</b>用例已勾选</div>
+  <button class="go" id="go" type="button" disabled>确认范围</button>
+</footer>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+/* ════════════════════════════════════════════════════════════════
+   L3 用例筛选 · 方案验证 Demo
+   ════════════════════════════════════════════════════════════════
+
+   验证目标（对应方案文档的 D2）：
+     ① 全量 1249 条用例下发到 H5 后，手机端筛选是否流畅
+     ② **筛选结果 + 车辆的记忆**是否跨页面重开生效
+     ③ 数据源用 raw 直读是否可行
+
+   ⚠️ 这是 **demo**，不接 RTM 任何生产代码。它证明的是交互与存储方案可行，
+      不代表最终实现（最终要接 webhook 上行、飞书身份、ESS 绑定）。
+   ════════════════════════════════════════════════════════════════ */
+
+const CONFIG = {
+  /* 用例清单：与页面同源托管在 GitHub 上。
+     低频数据（用例库一天变几次），用 raw@branch 即可 —— 5 分钟 CDN 缓存
+     对它是无害的。**高频的 event name 不能用这条路径**，见方案文档。 */
+  CASES_URL: './cases.json',
+
+  /* 记忆键。命名沿用已上线打点页的 `rtm_cp_` 前缀，将来两页合并时好统一。 */
+  K_MEMO: 'rtm_cp_case_memo',
+  K_VEH:  'rtm_cp_vehicle',
+};
+
+const $ = (s) => document.querySelector(s);
+
+/* ── 记忆：一个对象装下「筛选条件 + 勾选结果 + 车辆」─────────────
+   为什么合成一个键而不是拆成三个：
+   它们是**同一份作业上下文**，要么一起恢复要么一起重置。
+   拆开存会在「重置全部」时留下残渣（比如清了筛选却留着勾选），
+   合成一个键则 write 一次即原子生效。 */
+function loadMemo() {
+  try {
+    const m = JSON.parse(localStorage.getItem(CONFIG.K_MEMO) || '{}');
+    return {
+      flow: m.flow || '',
+      kw:   m.kw   || '',
+      pri:  Array.isArray(m.pri) ? m.pri : [],
+      sel:  Array.isArray(m.sel) ? m.sel.map(Number) : [],
+      veh:  m.veh  || '',
+    };
+  } catch { return { flow:'', kw:'', pri:[], sel:[], veh:'' }; }
+}
+function saveMemo() {
+  try { localStorage.setItem(CONFIG.K_MEMO, JSON.stringify(memo)); }
+  catch (e) { toast('本地存储写入失败，记忆可能丢失'); }
+}
+
+let memo = loadMemo();
+
+/* 车辆同时也写进已上线打点页用的 `rtm_cp_vehicle` —— 两页共用一辆车时，
+   用户在 demo 选了车，切回打点页不用再选一次。 */
+if (memo.veh) localStorage.setItem(CONFIG.K_VEH, memo.veh);
+
+let DATA = null;        // { flows, cols, rows }
+let rows = [];          // 当前命中
+let selSet = new Set(memo.sel);
+let vehList = [];
+
+function toast(msg, ms) {
+  const t = $('#toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), ms || 2000);
+}
+
+/* ── 加载用例 ─────────────────────────────────────────────────── */
+async function load() {
+  try {
+    const r = await fetch(`${CONFIG.CASES_URL}?_=${Date.now()}`, { cache: 'no-store' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    DATA = await r.json();
+  } catch (e) {
+    $('#list').innerHTML = `<div class="empty">用例加载失败：${e.message}<br>请检查网络后重试</div>`;
+    return;
+  }
+  const ci = Object.fromEntries(DATA.cols.map((c, i) => [c, i]));
+
+  // 车辆清单：复用已上线页的 vehicles.json，demo 不再单独生成
+  try {
+    const v = await fetch(`./vehicles.json?_=${Date.now()}`, { cache: 'no-store' });
+    vehList = (await v.json()).vehicles || [];
+  } catch { vehList = []; }
+
+  DATA.rows.forEach((r) => { r._i = ci; });
+  $('#flow').innerHTML = '<option value="">全部流程</option>' +
+    DATA.flows.map((f) =>
+      `<option value="${f.id}">${esc(f.model || '未命名')} · ${esc(f.name || f.project || '')}（${f.count}）</option>`
+    ).join('');
+
+  // 恢复记忆里的筛选条件 —— 在**渲染之前**写回控件，避免先渲染一次空态再跳变
+  $('#flow').value = memo.flow;
+  $('#kw').value = memo.kw;
+  renderPri();
+  renderVehLabel();
+  apply();
+  renderMemoBar();
+}
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+/* 优先级 chips：只列出数据里真实出现的取值，不写死 P0/P1/P2 ——
+   生产库里绝大多数行的 priority 是空串，写死会给出永远筛不到东西的按钮。 */
+function priValues() {
+  const s = new Set();
+  DATA.rows.forEach((r) => { const v = r[r._i.pri]; if (v) s.add(v); });
+  return [...s].sort();
+}
+function renderPri() {
+  $('#pri').innerHTML = priValues().map((p) =>
+    `<span class="chip ${memo.pri.includes(p) ? 'on' : ''}" data-pri="${esc(p)}">${esc(p)}</span>`
+  ).join('');
+}
+
+/* ── 筛选 ─────────────────────────────────────────────────────── */
+function apply() {
+  const fi = DATA.rows[0] ? DATA.rows[0]._i : null;
+  if (!fi) return;
+  const kw = memo.kw.trim().toLowerCase();
+  const flow = memo.flow;
+  const pri = memo.pri;
+
+  rows = DATA.rows.filter((r) => {
+    if (flow && String(r[fi.fid]) !== flow) return false;
+    if (pri.length && !pri.includes(r[fi.pri])) return false;
+    if (kw) {
+      const hay = `${r[fi.name]} ${r[fi.tno]}`.toLowerCase();
+      if (!hay.includes(kw)) return false;
+    }
+    return true;
+  });
+  render();
+}
+
+/* ── 渲染 ─────────────────────────────────────────────────────── */
+function render() {
+  const box = $('#list');
+  const fi = DATA.rows[0] ? DATA.rows[0]._i : null;
+  const kw = memo.kw.trim().toLowerCase();
+
+  $('#nSel').textContent = selSet.size;
+  $('#nHit').textContent = rows.length;
+  $('#fSel').textContent = `${selSet.size} 条`;
+  $('#go').disabled = selSet.size === 0;
+
+  if (!rows.length) {
+    box.innerHTML = '<div class="empty">没有符合条件的用例。<br>试试放宽筛选条件。</div>';
+    return;
+  }
+
+  // 上限保护：1249 条全渲染在手机上会卡。真实实现应做虚拟滚动或分页，
+  // demo 阶段先截断并提示，避免用「加载慢」掩盖真实结论。
+  const CAP = 200;
+  const shown = rows.slice(0, CAP);
+
+  box.innerHTML = shown.map((r) => {
+    const pid = r[fi.pid];
+    const on = selSet.has(pid);
+    const pri = r[fi.pri];
+    const done = r[fi.res] === 'PASS' || r[fi.res] === 'FAIL';
+    return `<div class="c ${on ? 'on' : ''}" data-pid="${pid}">
+      <div class="box">${on ? '✓' : ''}</div>
+      <div class="body">
+        <div class="nm">${hl(r[fi.name], kw)}</div>
+        <div class="meta">
+          ${pri ? `<span class="tag ${pri === 'P0' ? 'p0' : pri === 'P1' ? 'p1' : 'p2'}">${esc(pri)}</span>` : ''}
+          ${r[fi.tno] ? `<span class="tno">#${esc(r[fi.tno])}</span>` : ''}
+          ${done ? `<span class="tag done">已测</span>` : ''}
+          <span>pid ${pid}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('') + (rows.length > CAP
+    ? `<div class="empty">仅显示前 ${CAP} 条（共 ${rows.length} 条）</div>` : '');
+}
+
+function hl(text, kw) {
+  const t = esc(text);
+  if (!kw) return t;
+  const i = t.toLowerCase().indexOf(kw);
+  if (i < 0) return t;
+  return t.slice(0, i) + '<mark>' + t.slice(i, i + kw.length) + '</mark>' + t.slice(i + kw.length);
+}
+
+/* 记忆状态条：把「记住了什么」显式画出来，肉眼可验证。
+   正式方案不展示。 */
+function renderMemoBar() {
+  const parts = [];
+  if (memo.veh) parts.push(`车 ${memo.veh}`);
+  if (memo.flow) {
+    const f = DATA.flows.find((x) => String(x.id) === memo.flow);
+    parts.push(`流程 ${f ? (f.model || f.id) : memo.flow}`);
+  }
+  if (memo.kw) parts.push(`关键词「${memo.kw}」`);
+  if (memo.pri.length) parts.push(`优先级 ${memo.pri.join('/')}`);
+  parts.push(`已勾选 ${selSet.size} 条`);
+  $('#memo').textContent = '记忆：' + (parts.length ? parts.join(' · ') : '（空）');
+}
+
+function renderVehLabel() {
+  const el = $('#veh');
+  el.textContent = memo.veh || '未选择';
+  el.classList.toggle('ph', !memo.veh);
+}
+
+/* ── 交互 ─────────────────────────────────────────────────────── */
+$('#flow').addEventListener('change', (e) => {
+  memo.flow = e.target.value; saveMemo(); apply(); renderMemoBar();
+});
+// 关键词用 input 实时筛（本地 1249 条，过滤成本可忽略）；
+// ⚠️ 注意与后端列表页的约定相反 —— 那边的 onSearch 必须禁 onChange 以免打接口，
+//    这里不发请求，实时反而更跟手。
+$('#kw').addEventListener('input', (e) => {
+  memo.kw = e.target.value; saveMemo(); apply(); renderMemoBar();
+});
+$('#pri').addEventListener('click', (e) => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  const p = chip.dataset.pri;
+  const i = memo.pri.indexOf(p);
+  if (i >= 0) memo.pri.splice(i, 1); else memo.pri.push(p);
+  saveMemo(); renderPri(); apply(); renderMemoBar();
+});
+$('#list').addEventListener('click', (e) => {
+  const c = e.target.closest('.c');
+  if (!c) return;
+  const pid = Number(c.dataset.pid);
+  if (selSet.has(pid)) selSet.delete(pid); else selSet.add(pid);
+  memo.sel = [...selSet];
+  saveMemo(); render(); renderMemoBar();
+});
+$('#clrSel').addEventListener('click', () => {
+  selSet.clear(); memo.sel = []; saveMemo(); render(); renderMemoBar();
+});
+$('#clrAll').addEventListener('click', () => {
+  // 整体重置：一个键写一次，不留残渣
+  memo = { flow:'', kw:'', pri:[], sel:[], veh:'' };
+  selSet.clear();
+  localStorage.removeItem(CONFIG.K_VEH);
+  saveMemo();
+  $('#flow').value = ''; $('#kw').value = '';
+  renderPri(); renderVehLabel(); apply(); renderMemoBar();
+  toast('已重置全部记忆');
+});
+
+$('#vehBtn').addEventListener('click', () => {
+  if (!vehList.length) { toast('车辆清单未加载'); return; }
+  const cur = memo.veh;
+  const q = prompt('车辆编号（输入片段筛选）\n\n' +
+    vehList.slice(0, 40).map((v) => v.plate).join('\n') +
+    (vehList.length > 40 ? `\n…共 ${vehList.length} 辆` : ''), cur || '');
+  if (q === null) return;
+  const hit = vehList.find((v) => v.plate === q.trim()) ||
+              vehList.find((v) => v.plate.includes(q.trim()));
+  if (!hit) { toast('未找到该车辆'); return; }
+  memo.veh = hit.plate;
+  localStorage.setItem(CONFIG.K_VEH, hit.plate);
+  saveMemo(); renderVehLabel(); renderMemoBar();
+  toast(`已选车辆 ${hit.plate}`);
+});
+
+$('#go').addEventListener('click', () => {
+  // demo 只展示将要上行的内容，不真发 —— 方案文档里再定协议
+  const payload = { v: memo.veh, pids: [...selSet].slice(0, 20), n: selSet.size };
+  toast(`将上行：${selSet.size} 条用例` + (selSet.size > 20 ? `（预览前 20）` : '') +
+        `\n${JSON.stringify(payload)}`, 4000);
+});
+
+load();
+</script>
+</body>
+</html>
