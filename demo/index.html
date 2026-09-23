@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
 <title>L3 用例筛选 · 方案验证 Demo</title>
+<!-- 内联 favicon：不声明时浏览器会自动请求 /favicon.ico 并拿到 404，
+     在控制台留下噪音（已上线的打点页也有这个问题，可作为改进项）。
+     用 data URI 内联可避免多一次网络请求，也不必往仓库里塞二进制文件。 -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%233370ff'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='%23fff' font-family='sans-serif'%3EL3%3C/text%3E%3C/svg%3E">
 <style>
   /* 视觉与 docs/tasks/feishu-checkpoint-guide/index.html（已上线的打点 H5）保持一致：
      同一批用户在同一个场地用，两页风格不一致会被当成两个系统。
