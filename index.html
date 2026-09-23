@@ -334,7 +334,10 @@ const $ = (s) => document.querySelector(s);
    }
    ══════════════════════════════════════════════════════════════ */
 let reporter = localStorage.getItem(K_REPORTER) || '';
-let records  = loadRecords();          // 倒序：最新在前
+// ⚠️ 数组自身顺序**不承载展示语义** —— render() 每次按打点时间升序重排。
+//    历史版本曾把新记录 unshift 到头部，并把那个顺序原样写进了 localStorage；
+//    若在此处依赖数组顺序，存量记录（新在前）与新记录（新在后）会朝向相反地交错。
+let records  = loadRecords();
 let openId   = null;                   // 当前展开的记录 id
 let offsetMin = 0;                     // 打点时间微调（分钟）
 
@@ -700,7 +703,15 @@ function render() {
     return;
   }
 
-  records.forEach((r) => box.appendChild(buildCard(r, gen)));
+  // 打点时间**升序**（旧 → 新，最新一条在最下）。
+  // 排序而非沿用数组顺序：无需迁移存量 localStorage 数据，且任何写入路径
+  // 造成的乱序都会在下次渲染自愈。t 是 'YYYY-MM-DD HH:mm:ss' 定长串，
+  // 字典序即时间序，不必解析成 Date。
+  // ⚠️ 副作用（有意为之）：卡片内「-1分/+1分」微调时间后会重新定位，
+  //    这是「列表按时间排序」的必然结果；展开态由 openId 跟随，不受影响。
+  [...records]
+    .sort((a, b) => String(a.t).localeCompare(String(b.t)))
+    .forEach((r) => box.appendChild(buildCard(r, gen)));
 }
 
 function buildCard(r, gen) {
@@ -942,13 +953,13 @@ function onPunch() {
     st: 'draft',
     sent: false,
   };
-  records.unshift(r);
+  records.push(r);          // 追加到末尾 = 时间最新 = 列表最下（顺序由 render() 排序保证）
   openId = r.id;
   saveRecords();
   render();
-  // 滚到新卡片
+  // 滚到新卡片：时间升序下新记录在**末尾**
   requestAnimationFrame(() => {
-    const el = $('#list').firstElementChild;
+    const el = $('#list').lastElementChild;
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   });
 }
