@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>RTM 打点录入</title>
+<style>
+  :root{
+    --blue:#3370ff; --blue-d:#245bdb; --bg:#f5f6f7; --card:#fff;
+    --text:#1f2329; --sub:#8f959e; --line:#e5e6eb; --ok:#34c724; --err:#f54a45;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    background:var(--bg);color:var(--text);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;
+    display:flex;flex-direction:column;
+    padding-bottom:calc(88px + env(safe-area-inset-bottom));
+    -webkit-user-select:none;user-select:none;
+  }
+  header{
+    background:var(--card);padding:14px 18px;border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:10;
+  }
+  header h1{margin:0;font-size:17px;font-weight:600}
+  header p{margin:2px 0 0;font-size:12px;color:var(--sub)}
+
+  main{flex:1;padding:14px;display:flex;flex-direction:column;gap:12px}
+
+  .card{background:var(--card);border-radius:12px;padding:16px}
+  .card > label{display:block;font-size:12px;color:var(--sub);margin-bottom:8px}
+
+  /* ── 时间 ─────────────────────────────── */
+  .time-row{display:flex;align-items:center;gap:10px}
+  #timeText{
+    font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;
+    letter-spacing:.5px;flex:1;
+  }
+  .mini{
+    border:1px solid var(--line);background:#fff;color:var(--text);
+    border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;
+  }
+  .mini:active{background:#f0f1f2}
+  .mini.primary{border-color:var(--blue);color:var(--blue)}
+
+  /* ── 用户 ─────────────────────────────── */
+  .users{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    border:1px solid var(--line);border-radius:999px;padding:7px 16px;
+    font-size:14px;background:#fff;cursor:pointer;
+  }
+  .chip[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+
+  /* ── 录音 ─────────────────────────────── */
+  .rec-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0}
+  #recBtn{
+    width:104px;height:104px;border-radius:50%;border:none;
+    background:var(--blue);color:#fff;font-size:15px;font-weight:600;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    box-shadow:0 6px 18px rgba(51,112,255,.28);cursor:pointer;
+    transition:transform .12s, background .12s;
+  }
+  #recBtn:active{transform:scale(.96)}
+  #recBtn.recording{background:var(--err);box-shadow:0 6px 18px rgba(245,74,69,.28);animation:pulse 1.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.72}}
+  #recBtn .ico{font-size:26px;line-height:1}
+  #recBtn .lbl{font-size:12px;font-weight:400;opacity:.92}
+  .rec-hint{font-size:12px;color:var(--sub);text-align:center;min-height:18px}
+  #audioBox{width:100%;display:none}
+  #audioBox audio{width:100%;height:36px}
+  .clear-audio{
+    font-size:12px;color:var(--err);background:none;border:none;
+    padding:4px 0;cursor:pointer;text-decoration:underline;
+  }
+
+  /* ── 评论 ─────────────────────────────── */
+  textarea{
+    width:100%;border:1px solid var(--line);border-radius:10px;
+    padding:11px 12px;font:inherit;font-size:15px;resize:none;
+    min-height:88px;background:#fff;color:var(--text);
+    -webkit-user-select:text;user-select:text;
+  }
+  textarea:focus{outline:none;border-color:var(--blue)}
+  .counter{text-align:right;font-size:11px;color:var(--sub);margin-top:4px}
+
+  /* ── 底部提交 ─────────────────────────── */
+  footer{
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(245,246,247,.94);backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);
+  }
+  #submitBtn{
+    width:100%;border:none;border-radius:10px;background:var(--blue);color:#fff;
+    font-size:16px;font-weight:600;padding:14px;cursor:pointer;
+  }
+  #submitBtn:active{background:var(--blue-d)}
+  #submitBtn:disabled{background:#c9cdd4;cursor:not-allowed}
+
+  /* ── Toast ────────────────────────────── */
+  #toast{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.94);
+    background:rgba(31,35,41,.9);color:#fff;padding:12px 20px;border-radius:10px;
+    font-size:14px;max-width:78vw;text-align:center;z-index:99;
+    opacity:0;pointer-events:none;transition:opacity .18s, transform .18s;
+  }
+  #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+  /* ── 配置引导 ─────────────────────────── */
+  #setup{display:none}
+  #setup.show{display:block}
+  #setup input{
+    width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;
+    font:inherit;font-size:14px;-webkit-user-select:text;user-select:text;
+  }
+  .warn{background:#fff7e6;border:1px solid #ffd591;border-radius:10px;padding:12px;font-size:13px;color:#874d00}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>RTM 打点录入</h1>
+  <p>记录测试打点时间与评论，语音自动转文字</p>
+</header>
+
+<main>
+  <!-- 首次配置（webhook 未填时显示） -->
+  <section class="card" id="setup">
+    <div class="warn" style="margin-bottom:12px">
+      尚未配置 Webhook 地址。请在飞书群里添加「自定义机器人」，把生成的 Webhook 地址粘贴到下方。
+    </div>
+    <label for="hookInput">自定义机器人 Webhook 地址</label>
+    <input id="hookInput" type="url" inputmode="url" autocomplete="off"
+           placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx">
+    <div style="height:12px"></div>
+    <button class="mini primary" id="saveHook" style="width:100%;padding:11px">保存</button>
+  </section>
+
+  <!-- 打点时间 -->
+  <section class="card">
+    <label>打点时间</label>
+    <div class="time-row">
+      <div id="timeText">--:--</div>
+      <button class="mini" data-adj="-60">−1h</button>
+      <button class="mini" data-adj="-5">−5m</button>
+      <button class="mini primary" id="resetTime">现在</button>
+    </div>
+  </section>
+
+  <!-- 记录人 -->
+  <section class="card">
+    <label>记录人</label>
+    <div class="users" id="users"></div>
+  </section>
+
+  <!-- 语音 -->
+  <section class="card">
+    <label>语音评论（自动转文字，最长 30 秒）</label>
+    <div class="rec-wrap">
+      <button id="recBtn" type="button">
+        <span class="ico">🎙</span>
+        <span class="lbl">点击录音</span>
+      </button>
+      <div class="rec-hint" id="recHint">点击开始，再次点击结束</div>
+      <div id="audioBox">
+        <audio id="audioPlay" controls preload="metadata"></audio>
+        <div style="text-align:center">
+          <button class="clear-audio" id="clearAudio">删除这段录音</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 文字评论 -->
+  <section class="card">
+    <label for="comment">文字评论（可与语音同时提交）</label>
+    <textarea id="comment" maxlength="500" placeholder="补充说明…"></textarea>
+    <div class="counter"><span id="cnt">0</span>/500</div>
+  </section>
+</main>
+
+<footer>
+  <button id="submitBtn">提交打点</button>
+</footer>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════════════════════════
+   配置
+
+   数据链路：
+     本页（GitHub Pages 静态页，无后端、无凭证）
+       ↓ fetch(自定义机器人 Webhook)     ← 飞书唯一免凭证写入通道
+     飞书群「RTM 打点记录」
+       ↓ RTM 定时轮询拉取（user token）   ← 主动拉，非事件推送
+     RTM 后端：解析 → 分片重组 → ASR 转文字 → 落库
+
+   ⚠️ 消息**不需要 @ 任何人**：RTM 是主动去群里读，不依赖事件推送。
+      （早期版本 @ UST Bot 是为了触发事件订阅，那条路因权限不可用已废弃。）
+   ⚠️ WEBHOOK_URL 不写死在这里：本页是公开页面，地址会进 git 历史。
+      改用 URL 参数 `?hook=xxx` 或页面内填写存 localStorage。
+   ══════════════════════════════════════════════════════════════ */
+const CONFIG = {
+  // 留空则在页面上引导填写，并存 localStorage
+  WEBHOOK_URL: '',
+  USERS: ['熊星', '测试同学'],
+  MAX_RECORD_MS: 30000,      // 单段录音上限
+  CHUNK_SIZE: 12000,         // base64 分片大小（飞书单条 body 上限 20KB）
+  CHUNK_GAP_MS: 260,         // 分片间隔，避开 webhook 5 次/秒限速
+  TAG: '[RTM-CP]',           // RTM 侧据此识别本页面的消息
+};
+
+const $ = (s) => document.querySelector(s);
+const HOOK_KEY = 'rtm_cp_hook';
+
+/* ── 状态 ───────────────────────────────────────────────── */
+let hookUrl   = CONFIG.WEBHOOK_URL || localStorage.getItem(HOOK_KEY) || '';
+let userName  = CONFIG.USERS[0] || '';
+let offsetMin = 0;           // 时间微调（分钟）
+let audioBlob = null;
+let audioB64  = '';
+let recorder  = null;
+let recChunks = [];
+let recTimer  = null;
+let recStart  = 0;
+let submitting = false;
+
+/* ══ Toast ══════════════════════════════════════════════ */
+function toast(msg, ms) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), ms || 2000);
+}
+
+/* ══ 时间 ═══════════════════════════════════════════════ */
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function currentTime() {
+  const d = new Date(Date.now() + offsetMin * 60000);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ` +
+         `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function renderTime() { $('#timeText').textContent = currentTime().slice(11); }
+setInterval(renderTime, 10000);
+renderTime();
+
+document.querySelectorAll('[data-adj]').forEach((b) => {
+  b.addEventListener('click', () => {
+    offsetMin += Number(b.dataset.adj);
+    renderTime();
+  });
+});
+$('#resetTime').addEventListener('click', () => { offsetMin = 0; renderTime(); });
+
+/* ══ 记录人 ═════════════════════════════════════════════ */
+function renderUsers() {
+  const box = $('#users');
+  box.innerHTML = '';
+  CONFIG.USERS.forEach((u) => {
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.type = 'button';
+    b.textContent = u;
+    b.setAttribute('aria-pressed', String(u === userName));
+    b.addEventListener('click', () => { userName = u; renderUsers(); });
+    box.appendChild(b);
+  });
+}
+renderUsers();
+
+/* ══ 评论计数 ═══════════════════════════════════════════ */
+$('#comment').addEventListener('input', (e) => {
+  $('#cnt').textContent = e.target.value.length;
+});
+
+/* ══ 录音 ═══════════════════════════════════════════════ */
+function pickMime() {
+  const cands = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
+  for (const m of cands) {
+    if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m;
+  }
+  return '';
+}
+
+async function startRec() {
+  if (!navigator.mediaDevices || !window.MediaRecorder) {
+    toast('当前浏览器不支持录音');
+    return;
+  }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+    });
+  } catch (e) {
+    toast('无法访问麦克风，请检查权限');
+    return;
+  }
+
+  const mime = pickMime();
+  const opts = { audioBitsPerSecond: 8000 };   // 低码率：控制 base64 体积
+  if (mime) opts.mimeType = mime;
+
+  try {
+    recorder = new MediaRecorder(stream, opts);
+  } catch (e) {
+    recorder = new MediaRecorder(stream);      // 部分浏览器不认 audioBitsPerSecond
+  }
+
+  recChunks = [];
+  recorder.ondataavailable = (e) => { if (e.data && e.data.size) recChunks.push(e.data); };
+  recorder.onstop = () => {
+    stream.getTracks().forEach((t) => t.stop());
+    audioBlob = new Blob(recChunks, { type: recorder.mimeType || 'audio/webm' });
+    if (!audioBlob.size) { toast('没有录到声音'); return; }
+    audioB64 = '';
+    $('#audioPlay').src = URL.createObjectURL(audioBlob);
+    $('#audioBox').style.display = 'block';
+    const kb = (audioBlob.size / 1024).toFixed(1);
+    $('#recHint').textContent = `已录制 ${kb} KB`;
+  };
+
+  recorder.start();
+  recStart = Date.now();
+
+  const btn = $('#recBtn');
+  btn.classList.add('recording');
+  btn.querySelector('.ico').textContent = '⏹';
+  btn.querySelector('.lbl').textContent = '点击结束';
+
+  recTimer = setInterval(() => {
+    const s = Math.floor((Date.now() - recStart) / 1000);
+    $('#recHint').textContent = `录音中 ${s}s / ${CONFIG.MAX_RECORD_MS / 1000}s`;
+    if (Date.now() - recStart >= CONFIG.MAX_RECORD_MS) stopRec();
+  }, 200);
+}
+
+function stopRec() {
+  if (recorder && recorder.state === 'recording') recorder.stop();
+  clearInterval(recTimer);
+  const btn = $('#recBtn');
+  btn.classList.remove('recording');
+  btn.querySelector('.ico').textContent = '🎙';
+  btn.querySelector('.lbl').textContent = '点击录音';
+}
+
+$('#recBtn').addEventListener('click', () => {
+  if (recorder && recorder.state === 'recording') stopRec();
+  else startRec();
+});
+
+$('#clearAudio').addEventListener('click', () => {
+  audioBlob = null; audioB64 = '';
+  $('#audioBox').style.display = 'none';
+  $('#recHint').textContent = '点击开始，再次点击结束';
+});
+
+/* ══ base64 / 分片 ══════════════════════════════════════ */
+function blobToB64(blob) {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onerror = () => reject(new Error('音频读取失败'));
+    fr.onload = () => resolve(String(fr.result).split(',')[1] || '');
+    fr.readAsDataURL(blob);
+  });
+}
+
+function splitChunks(s, n) {
+  const out = [];
+  for (let i = 0; i < s.length; i += n) out.push(s.slice(i, i + n));
+  return out.length ? out : [''];
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/* ══ 提交 ═══════════════════════════════════════════════ */
+async function postOne(payload) {
+  // 无需 @ 任何人：RTM 主动轮询群消息，不依赖事件推送
+  const text = `${CONFIG.TAG} ${JSON.stringify(payload)}`;
+  const res = await fetch(hookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ msg_type: 'text', content: { text } }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (data.code !== 0) throw new Error(data.msg || `HTTP ${res.status}`);
+  return data;
+}
+
+async function submit() {
+  if (submitting) return;
+  if (!hookUrl) { $('#setup').classList.add('show'); toast('请先配置 Webhook 地址'); return; }
+
+  const comment = $('#comment').value.trim();
+  if (!comment && !audioBlob) { toast('请填写评论或录制语音'); return; }
+
+  submitting = true;
+  const btn = $('#submitBtn');
+  btn.disabled = true;
+  btn.textContent = '提交中…';
+
+  try {
+    if (audioBlob && !audioB64) audioB64 = await blobToB64(audioBlob);
+
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const parts = splitChunks(audioB64, CONFIG.CHUNK_SIZE);
+    const t = currentTime();
+
+    for (let i = 0; i < parts.length; i++) {
+      await postOne({
+        id, seq: i + 1, total: parts.length,
+        t, u: userName, c: comment,
+        a: parts[i], n: audioBlob ? 1 : 0,
+      });
+      btn.textContent = parts.length > 1 ? `提交中… ${i + 1}/${parts.length}` : '提交中…';
+      if (i < parts.length - 1) await sleep(CONFIG.CHUNK_GAP_MS);
+    }
+
+    toast(`✓ 已提交（${parts.length} 条）`, 2200);
+    // 重置表单，保留记录人与时间
+    $('#comment').value = ''; $('#cnt').textContent = '0';
+    $('#clearAudio').click();
+  } catch (e) {
+    toast('提交失败：' + (e.message || e), 3200);
+  } finally {
+    submitting = false;
+    btn.disabled = false;
+    btn.textContent = '提交打点';
+  }
+}
+
+$('#submitBtn').addEventListener('click', submit);
+
+/* ══ 首次配置 ═══════════════════════════════════════════ */
+if (!hookUrl) $('#setup').classList.add('show');
+
+$('#saveHook').addEventListener('click', () => {
+  const v = $('#hookInput').value.trim();
+  if (!/^https:\/\/open\.feishu\.cn\/open-apis\/bot\/v2\/hook\/.+/.test(v)) {
+    toast('地址格式不对，应以 https://open.feishu.cn/open-apis/bot/v2/hook/ 开头');
+    return;
+  }
+  hookUrl = v;
+  localStorage.setItem(HOOK_KEY, v);
+  $('#setup').classList.remove('show');
+  toast('✓ 已保存');
+});
+
+/* URL 参数可覆盖：?hook=xxx&user=xxx */
+const qs = new URLSearchParams(location.search);
+if (qs.get('hook')) { hookUrl = qs.get('hook'); localStorage.setItem(HOOK_KEY, hookUrl); $('#setup').classList.remove('show'); }
+if (qs.get('user')) { userName = qs.get('user'); renderUsers(); }
+</script>
+</body>
+</html>
